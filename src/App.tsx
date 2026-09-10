@@ -1,99 +1,58 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-import type { ValuesDTO } from './types'
+import { useState } from 'react'
+import { STALE_MS } from './api'
+import { GiftViews, Sprig } from './GiftViews'
+import { ThemeTabs } from './ThemeTabs'
+import { initialTheme, THEME_STORAGE_KEY, type Theme } from './themes'
+import { useValues } from './useValues'
 
-const API_BASE = 'https://weddig-child-backend.onrender.com'
-
-const COLOR_MAP: Record<string, string> = {
-  Мальчик: '#56b0cbff',
-  Девочка: '#FF9EA7',
-}
-
-const COLOR_STROKE_MAP: Record<string, string> = {
-  Мальчик: '#2a5360ff',
-  Девочка: '#724d50ff',
-}
+const time = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
 export default function App() {
-  const [data, setData] = useState<ValuesDTO | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const timer = useRef<number | null>(null)
+  const { data, error, now, retry } = useValues()
+  const [theme, setTheme] = useState<Theme>(initialTheme)
+  const stale = !!data && (data.stale || now - Date.parse(data.fetchedAt) > STALE_MS || !!error)
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch(`${API_BASE}/api/values`, {
-          cache: 'no-store',
-        })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = (await res.json()) as ValuesDTO
-        setData(json)
-        setError(null)
-      } catch (e: any) {
-        setError(e?.message || 'Fetch error')
-      } finally {
-        timer.current = window.setTimeout(fetchData, 5000)
-      }
-    }
-
-    fetchData()
-
-    return () => {
-      if (timer.current) clearTimeout(timer.current)
-    }
-  }, [])
-
-  const chartData = useMemo(
-    () =>
-      data
-        ? [
-            { name: 'Мальчик', value: data.a },
-            { name: 'Девочка', value: data.b },
-          ]
-        : [],
-    [data]
-  )
+  function selectTheme(next: Theme) {
+    setTheme(next)
+    try { localStorage.setItem(THEME_STORAGE_KEY, next) } catch { /* Selection works without storage. */ }
+    const url = new URL(window.location.href)
+    url.searchParams.set('style', next)
+    window.history.replaceState(null, '', url)
+  }
 
   return (
-    <div className='page'>
-      <div className='card'>
-        <h1 className='title'>Кто будет первым?</h1>
-        {error && <div className='error'>Ошибка: {error}</div>}
-
-        {!data ? (
-          <div className='loading'>Загрузка…</div>
-        ) : (
-          <>
-            <div className='phones'>
-              <span className='boy'>{'+7 (951) 137-58-50'}</span>
-              <span className='girl'>{'+7 (910) 327-91-55'}</span>
+    <main className={`wedding theme-${theme}`}>
+      <div className='wedding-shell'>
+        <header className='topline'>
+          <span className='wedding-date'>17 <i>/</i> 09 <i>/</i> 2026</span>
+          <ThemeTabs selected={theme} onSelect={selectTheme} />
+        </header>
+        <section className='wedding-panel' id='wedding-panel' role='tabpanel' aria-labelledby={`tab-${theme}`}>
+          <div className='presentation'>
+            <div className='hero'>
+              <span className='couple'>Елизавета <i>&</i> Алексей</span>
+              <Sprig />
+              <h1>Кто будет <em>первым?</em></h1>
+              <p className='intro'>Маленькое пожелание —<br className='evening-break' /> большая любовь.</p>
             </div>
-            <div className='chart'>
-              <ResponsiveContainer width='100%' height={620}>
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    dataKey='value'
-                    nameKey='name'
-                    label={({ percent }) => `${(percent! * 100).toFixed(0)}%`} // проценты
-                    outerRadius={300}
-                  >
-                    {chartData.map((entry, i) => (
-                      <Cell
-                        key={i}
-                        fill={COLOR_MAP[entry.name] || '#8884d8'}
-                        stroke={COLOR_STROKE_MAP[entry.name] || '#8884d8'}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+            <GiftViews data={data} theme={theme} />
+          </div>
+          <footer className='wedding-footer'>
+            <span className='footer-wish'>Самое главное — чтобы в любви.</span>
+            <span className={`data-status ${stale || error ? 'is-stale' : ''}`}>
+              <span className='status-dot' aria-hidden='true' />
+              {data ? `${stale ? 'Последние данные' : 'Обновлено'} в ${time.format(new Date(data.fetchedAt))}` : error ? 'Ждём данные' : 'Получаем суммы…'}
+            </span>
+          </footer>
+          {(error || stale) && (
+            <div className='error' role='status'>
+              <span>{error || 'Показаны последние сохранённые суммы. Обновляем данные…'}</span>
+              <button type='button' onClick={retry}>Повторить сейчас</button>
             </div>
-          </>
-        )}
+          )}
+        </section>
+        <span className='selection-note'>Три настроения одного прекрасного дня</span>
       </div>
-    </div>
+    </main>
   )
 }

@@ -1,69 +1,39 @@
-# React + TypeScript + Vite
+# Свадебная диаграмма
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite + Recharts. Показывает две суммы из приватной Google Sheets.
 
-Currently, two official plugins are available:
+**Бесплатное размещение:** Cloudflare Workers Free + Static Assets, один адрес `workers.dev`.
+Frontend обращается к относительному `/api/values`; Google credentials в клиент не попадают.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Инструкция владельцу
 
-## Expanding the ESLint configuration
+[Создать таблицу, настроить Google и бесплатно опубликовать приложение](docs/FREE_DEPLOYMENT.md).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Локальный запуск
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Node.js 24 LTS. Каталоги `wedding-child` и `wedding-child-backend` должны лежать рядом.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm ci
+npm test
+npm run lint
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Затем запустите `npm run dev` в backend (порт 8787).
+Для разработки React выполните здесь `npm run dev` (порт 5173, API через Vite proxy).
+Production frontend вместе с API доступен локально на http://127.0.0.1:8787/.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+`VITE_API_BASE_URL` и `BASE_PATH` больше не используются.
+Приложение размещается в корне сайта. Старый GitHub Pages workflow заменён ручной проверкой,
+чтобы размещение не зависело от облачных CI-минут.
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Поведение при сбоях
+
+- Запрос каждые 10 секунд после завершения предыдущего, таймаут 12 секунд.
+- Повторные ошибки увеличивают паузу до 60 секунд.
+- Runtime-проверка чисел, меток времени и stale.
+- Последние суммы сохраняются в localStorage, после перезагрузки всегда считаются устаревшими до успешного ответа.
+- Явное предупреждение о потере связи, время последнего чтения и кнопка повтора.
+- Нулевые суммы отображаются отдельным состоянием.
+- Offline-перезапуск сайта не гарантируется: service worker не используется.
