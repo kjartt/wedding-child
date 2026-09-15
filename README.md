@@ -2,12 +2,15 @@
 
 React + TypeScript + Vite + Recharts. Показывает две суммы из приватной Google Sheets.
 
-**Бесплатное размещение:** Cloudflare Workers Free + Static Assets, один адрес `workers.dev`.
-Frontend обращается к относительному `/api/values`; Google credentials в клиент не попадают.
+**Размещение:** Cloudflare Worker читает Google Sheets, а публичной точкой входа без VPN служит
+Render Static Site. Render прозрачно переписывает `/api/*` на Worker; Google credentials в клиент
+не попадают. Прямой адрес `workers.dev` остаётся техническим резервом.
 
 ## Инструкция владельцу
 
 [Создать таблицу, настроить Google и бесплатно опубликовать приложение](docs/FREE_DEPLOYMENT.md).
+
+[Настроить доступ без VPN через Render](docs/RENDER_GATEWAY.md).
 
 ## Локальный запуск
 
