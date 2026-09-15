@@ -2,19 +2,19 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 import type { ValuesDTO } from './types'
 import type { Theme } from './themes'
 
-export const money = new Intl.NumberFormat('ru-RU', {
+const money = new Intl.NumberFormat('ru-RU', {
   style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 2,
 })
 
-type Gift = { name: string; recipient: string; phone: string; href: string; value: number; share: number; side: 'boy' | 'girl' }
+type Gift = { name: string; recipient: string; phone: string; value: number; share: number; side: 'boy' | 'girl' }
 
 function gifts(data: ValuesDTO | null): Gift[] {
   const total = data ? data.a + data.b : 0
   const boyShare = total ? Math.round(data!.a / total * 100) : 0
   return [
-    { name: 'Мальчик', recipient: 'Алексей', phone: '+7 (980) 391-01-79', href: 'tel:+79803910179',
+    { name: 'Мальчик', recipient: 'Алексей', phone: '+7 (980) 391-01-79',
       value: data?.a ?? 0, share: boyShare, side: 'boy' },
-    { name: 'Девочка', recipient: 'Елизавета', phone: '+7 (900) 947-87-83', href: 'tel:+79009478783',
+    { name: 'Девочка', recipient: 'Елизавета', phone: '+7 (900) 947-87-83',
       value: data?.b ?? 0, share: total ? 100 - boyShare : 0, side: 'girl' },
   ]
 }
@@ -22,8 +22,8 @@ function gifts(data: ValuesDTO | null): Gift[] {
 function Contact({ entry }: { entry: Gift }) {
   return (
     <div className='contact'>
-      <span className='contact-name'>{entry.recipient}</span>
-      <a href={entry.href}>{entry.phone}</a>
+      <span className='contact-name'>Перевод для {entry.recipient}</span>
+      <span className='phone-number'>{entry.phone}</span>
     </div>
   )
 }
@@ -33,8 +33,9 @@ function GiftDetails({ entry, available }: { entry: Gift; available: boolean }) 
     <section className={`gift-details ${entry.side}`} aria-label={entry.name}>
       <span className='eyebrow'>За {entry.side === 'boy' ? 'мальчика' : 'девочку'}</span>
       <h2>{entry.name}</h2>
+      <div className='share-value'>{available ? entry.share : '—'}<span>{available ? '%' : ''}</span></div>
+      <span className='share-caption'>{available ? 'от общей суммы' : 'Ждём первое пожелание'}</span>
       <div className='gift-amount'>{available ? money.format(entry.value) : '—'}</div>
-      <span className='share-caption'>{available ? `${entry.share}% от общей суммы` : 'Ждём первое пожелание'}</span>
       <Contact entry={entry} />
     </section>
   )
@@ -108,7 +109,7 @@ export function GiftViews({ data, theme }: { data: ValuesDTO | null; theme: Them
         {total > 0 ? (
           <ResponsiveContainer width='100%' height='100%'>
             <PieChart>
-              <Pie data={entries} dataKey='value' nameKey='name' innerRadius='76%' outerRadius='91%' startAngle={90} endAngle={-270} isAnimationActive={false} strokeWidth={0} paddingAngle={total && data?.a && data.b ? 2 : 0}>
+              <Pie data={entries} dataKey='value' nameKey='name' innerRadius='79%' outerRadius='93%' startAngle={90} endAngle={-270} isAnimationActive={false} strokeWidth={0} paddingAngle={total && data?.a && data.b ? 2 : 0}>
                 <Cell fill='#68693b' />
                 <Cell fill='#d8c5a6' />
               </Pie>
