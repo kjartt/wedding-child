@@ -1,6 +1,6 @@
 import type { ValuesDTO } from './types'
 
-export const POLL_MS = 10_000
+export const POLL_MS = 5_000
 export const STALE_MS = 45_000
 const STORAGE_KEY = 'wedding-values-v2'
 const MAX_STORED_AGE_MS = 24 * 60 * 60 * 1000
